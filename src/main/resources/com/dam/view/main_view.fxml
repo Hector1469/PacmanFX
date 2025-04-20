@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.dam.pacmanfx.controller.MainController">
+
+    <!-- Zona superior -->
+    <top>
+        <HBox spacing="100" alignment="CENTER" style="-fx-background-color: black; -fx-padding: 10;">
+            <!-- Columna 1: 1UP -->
+            <VBox alignment="CENTER">
+                <Label text="1UP" style="-fx-text-fill: red; -fx-font-size: 18px;" />
+                <Label fx:id="labelScore1UP" text="0" style="-fx-text-fill: white; -fx-font-size: 16px;" />
+            </VBox>
+
+            <!-- Columna 2: HIGH SCORE -->
+            <VBox alignment="CENTER">
+                <Label text="HIGH SCORE" style="-fx-text-fill: white; -fx-font-size: 18px;" />
+                <Label fx:id="labelHighScore" text="0" style="-fx-text-fill: white; -fx-font-size: 16px;" />
+            </VBox>
+        </HBox>
+    </top>
+
+
+    <!-- Zona central (juego) -->
+    <center>
+        <Pane>
+            <Canvas fx:id="gameCanvas" />
+        </Pane>
+    </center>
+
+    <!-- Zona inferior -->
+    <bottom>
+        <HBox spacing="20" style="-fx-background-color: black;" alignment="CENTER_LEFT" prefHeight="40">
+            <Label text="Lives: " style="-fx-text-fill: white; -fx-font-size: 14px;" />
+            <!-- Aquí se pueden añadir iconos de Pac-Man más adelante -->
+        </HBox>
+    </bottom>
+</BorderPane>
