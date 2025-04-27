@@ -1,0 +1,9 @@
+.label {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+}
+
+.canvas {
+    -fx-font-family: "Press Start 2P";
+}

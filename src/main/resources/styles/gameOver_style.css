@@ -1,0 +1,35 @@
+.root {
+    -fx-background-color: black;
+}
+
+.text {
+    -fx-fill: yellow;
+    -fx-font-family: "Press Start 2P";
+}
+
+.text-field {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 14px;
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-border-color: yellow;
+    -fx-border-width: 2px;
+    -fx-prompt-text-fill: gray;
+}
+
+.button {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 14px;
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-border-color: yellow;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, yellow, 10, 0.5, 0, 0);
+}
+
+.button:hover {
+    -fx-background-color: yellow;
+    -fx-text-fill: black;
+}
+

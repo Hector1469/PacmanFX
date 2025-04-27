@@ -1,7 +1,9 @@
 package com.dam.pacmanfx.controller;
 
+import com.dam.pacmanfx.db.SQLiteManager;
 import com.dam.pacmanfx.model.Ghost;
 import com.dam.pacmanfx.model.Pacman;
+import com.dam.pacmanfx.util.SceneManager;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -10,8 +12,9 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-
-public class MainController {
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+public class GameController {
 
     @FXML
     private Canvas gameCanvas;
@@ -22,9 +25,26 @@ public class MainController {
     @FXML
     private Label labelHighScore;
 
+    @FXML
+    private Label labelLives;
+
+    @FXML
+    private Label labelLevel;
+
+
     private Image fondoMapa;
     private Pacman pacman = new Pacman();
     private Ghost redGhost = new Ghost(11, 13, "red");
+    private Ghost pinkGhost = new Ghost(14, 13, "pink");
+    private Ghost blueGhost = new Ghost(13, 13, "blue");
+    private Ghost orangeGhost = new Ghost(13, 14, "orange");
+
+    private int nivel = 1;
+    private int ghostSpeed = 300;
+
+
+    private int pillsEaten = 0;
+
 
     private double tileSize;
     private double offsetX;
@@ -37,6 +57,13 @@ public class MainController {
     private double floatingY = 0;
     private int floatingTimer = 0;
     private int vidas = 3;
+
+    private boolean frutaGenerada = false;
+    private boolean frutaVisible = false;
+    private double frutaX;
+    private double frutaY;
+    private int frutaTimer = 0;
+    private Image frutaImage;
     private boolean isPacmanDying = false;
     private boolean mostrarFantasmas = true;
 
@@ -77,16 +104,23 @@ public class MainController {
             {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
     };
 
+    private final int[][] mapaOriginal = new int[mapa.length][mapa[0].length];
+
     @FXML
     public void initialize() {
+        Font font = Font.loadFont(getClass().getResourceAsStream("/fonts/PressStart2P-Regular.ttf"), 14);
         labelScore1UP.setText("0");
-        labelHighScore.setText("0");
+        labelHighScore.setText(String.valueOf(SQLiteManager.obtenerHighScore()));
+        actualizarLabels();
         fondoMapa = new Image(getClass().getResource("/photo/Map.png").toExternalForm());
 
         dibujarMapa();
 
         gameCanvas.widthProperty().addListener((obs, oldVal, newVal) -> dibujarMapa());
         gameCanvas.heightProperty().addListener((obs, oldVal, newVal) -> dibujarMapa());
+
+        frutaImage = new Image(getClass().getResource("/photo/spr_cherry_0.png").toExternalForm());
+
 
         Platform.runLater(() -> {
             Scene scene = gameCanvas.getScene();
@@ -116,6 +150,15 @@ public class MainController {
                                 pacman.updateFrame();
                                 comprobarPildoras();
                                 comprobarColisiones();
+                                comprobarFruta();
+                            }
+
+                            if (frutaVisible) {
+                                frutaTimer--;
+                                if (frutaTimer <= 0) {
+                                    frutaVisible = false;
+                                    dibujarMapa();
+                                }
                             }
                             dibujarMapa();
                         });
@@ -125,7 +168,7 @@ public class MainController {
                 new Thread(() -> {
                     while (true) {
                         try {
-                            Thread.sleep(redGhost.getMode() == Ghost.Mode.DEAD ? 100 : 300);
+                            Thread.sleep(redGhost.getMode() == Ghost.Mode.DEAD ? 100 : ghostSpeed);
                         } catch (InterruptedException ignored) {}
                         Platform.runLater(() -> {
                             if (!isPacmanDying) {
@@ -137,19 +180,73 @@ public class MainController {
                     }
                 }).start();
 
+                // Mover pinkGhost
+                new Thread(() -> {
+                    while (true) {
+                        try { Thread.sleep(pinkGhost.getMode() == Ghost.Mode.DEAD ? 100 : ghostSpeed);
+                        } catch (InterruptedException ignored) {}
+                        Platform.runLater(() -> {
+                            if (!isPacmanDying) {
+                                pinkGhost.updateFleeing();
+                                pinkGhost.move(mapa, pacman);
+                            }
+                            dibujarMapa();
+                        });
+                    }
+                }).start();
+
+                // Mover blueGhost
+                new Thread(() -> {
+                    while (true) {
+                        try { Thread.sleep(blueGhost.getMode() == Ghost.Mode.DEAD ? 100 : ghostSpeed);
+                        } catch (InterruptedException ignored) {}
+                        Platform.runLater(() -> {
+                            if (!isPacmanDying) {
+                                blueGhost.updateFleeing();
+                                blueGhost.move(mapa, pacman);
+                            }
+                            dibujarMapa();
+                        });
+                    }
+                }).start();
+
+                // Mover orangeGhost
+                new Thread(() -> {
+                    while (true) {
+                        try { Thread.sleep(orangeGhost.getMode() == Ghost.Mode.DEAD ? 100 : ghostSpeed);
+                        } catch (InterruptedException ignored) {}
+                        Platform.runLater(() -> {
+                            if (!isPacmanDying) {
+                                orangeGhost.updateFleeing();
+                                orangeGhost.move(mapa, pacman);
+                            }
+                            dibujarMapa();
+                        });
+                    }
+                }).start();
+
+
                 new Thread(() -> {
                     while (true) {
                         try { Thread.sleep(50); } catch (InterruptedException ignored) {}
                         Platform.runLater(() -> {
                             if (!isPacmanDying) {
                                 redGhost.updateFrame();
+                                pinkGhost.updateFrame();
+                                blueGhost.updateFrame();
+                                orangeGhost.updateFrame();
                             }
                             dibujarMapa();
                         });
                     }
                 }).start();
+
             }
         });
+
+        for (int i = 0; i < mapa.length; i++) {
+            System.arraycopy(mapa[i], 0, mapaOriginal[i], 0, mapa[i].length);
+        }
     }
 
     private void dibujarMapa() {
@@ -211,16 +308,41 @@ public class MainController {
 
         if (mostrarFantasmas) {
             Image redGhostImage = redGhost.getCurrentImage();
-            double ghostX = offsetX + redGhost.getCol() * tileSize;
-            double ghostY = offsetY + redGhost.getRow() * tileSize;
-            gc.drawImage(redGhostImage, ghostX, ghostY, tileSize, tileSize);
+            double redX = offsetX + redGhost.getCol() * tileSize;
+            double redY = offsetY + redGhost.getRow() * tileSize;
+            gc.drawImage(redGhostImage, redX, redY, tileSize, tileSize);
+
+            Image pinkGhostImage = pinkGhost.getCurrentImage();
+            double pinkX = offsetX + pinkGhost.getCol() * tileSize;
+            double pinkY = offsetY + pinkGhost.getRow() * tileSize;
+            gc.drawImage(pinkGhostImage, pinkX, pinkY, tileSize, tileSize);
+
+            Image blueGhostImage = blueGhost.getCurrentImage();
+            double blueX = offsetX + blueGhost.getCol() * tileSize;
+            double blueY = offsetY + blueGhost.getRow() * tileSize;
+            gc.drawImage(blueGhostImage, blueX, blueY, tileSize, tileSize);
+
+            Image orangeGhostImage = orangeGhost.getCurrentImage();
+            double orangeX = offsetX + orangeGhost.getCol() * tileSize;
+            double orangeY = offsetY + orangeGhost.getRow() * tileSize;
+            gc.drawImage(orangeGhostImage, orangeX, orangeY, tileSize, tileSize);
+        }
+
+        if (frutaVisible) {
+            double x = offsetX + frutaX * tileSize;
+            double y = offsetY + frutaY * tileSize;
+            gameCanvas.getGraphicsContext2D().drawImage(frutaImage, x, y, tileSize, tileSize);
         }
 
         if (floatingTimer > 0) {
             gc.setFill(Color.WHITE);
+            gc.setFont(new javafx.scene.text.Font(20));
             gc.fillText(String.valueOf(floatingScore), floatingX, floatingY);
             floatingTimer--;
         }
+
+
+
     }
 
 
@@ -230,39 +352,87 @@ public class MainController {
         if (mapa[row][col] == 6) {
             mapa[row][col] = 0;
             score += 10;
+            pillsEaten++;
+
+            if (pillsEaten == 10) pinkGhost.liberar();
+            if (pillsEaten == 20) blueGhost.liberar();
+            if (pillsEaten == 30) orangeGhost.liberar();
+
         } else if (mapa[row][col] == 3) {
             mapa[row][col] = 0;
             score += 50;
             activarFugaTodos();
         }
         labelScore1UP.setText(String.valueOf(score));
+
+        if (!frutaVisible && !frutaGenerada && pillsEaten >= contarPildoras(mapaOriginal) / 2) {
+            frutaVisible = true;
+            frutaGenerada = true;
+            frutaTimer = 150;
+            frutaX = 13;
+            frutaY = 17;
+        }
+
+        if (contarPildoras(mapa) == 0) {
+            siguienteNivel();
+        }
     }
+
 
     private void activarFugaTodos() {
         redGhost.startFleeing();
+        pinkGhost.startFleeing();
+        blueGhost.startFleeing();
+        orangeGhost.startFleeing();
+        ghostComboCounter = 0;
     }
+
 
     private void comprobarColisiones() {
         if (isPacmanDying) return;
 
-        if (pacman.getRow() == redGhost.getRow() && pacman.getCol() == redGhost.getCol()) {
-            if (redGhost.getMode() == Ghost.Mode.FLEEING) {
+        comprobarColisionConFantasma(redGhost);
+        comprobarColisionConFantasma(pinkGhost);
+        comprobarColisionConFantasma(blueGhost);
+        comprobarColisionConFantasma(orangeGhost);
+    }
+    private void comprobarColisionConFantasma(Ghost ghost) {
+        if (pacman.getRow() == ghost.getRow() && pacman.getCol() == ghost.getCol()) {
+            if (ghost.getMode() == Ghost.Mode.FLEEING) {
                 ghostComboCounter++;
                 int pointsEarned = 200 * (int) Math.pow(2, ghostComboCounter - 1);
                 score += pointsEarned;
                 labelScore1UP.setText(String.valueOf(score));
 
-                redGhost.startDead();
+                ghost.startDead();
 
                 floatingScore = pointsEarned;
-                floatingX = offsetX + redGhost.getCol() * tileSize;
-                floatingY = offsetY + redGhost.getRow() * tileSize;
+                floatingX = offsetX + ghost.getCol() * tileSize;
+                floatingY = offsetY + ghost.getRow() * tileSize;
                 floatingTimer = 20;
-            } else if (redGhost.getMode() == Ghost.Mode.NORMAL) {
+            } else if (ghost.getMode() == Ghost.Mode.NORMAL) {
                 pacmanMuere();
             }
         }
     }
+
+    private void comprobarFruta() {
+        if (frutaVisible && pacman.getRow() == (int) frutaY && pacman.getCol() == (int) frutaX) {
+            frutaVisible = false;
+            score += nivel * 200;
+            labelScore1UP.setText(String.valueOf(score));
+
+            floatingScore = nivel * 200;
+            floatingX = offsetX + frutaX * tileSize;
+            floatingY = offsetY + frutaY * tileSize;
+            floatingTimer = 20;
+
+            dibujarMapa();
+        }
+    }
+
+
+
 
     private void pacmanMuere() {
         isPacmanDying = true;
@@ -272,26 +442,20 @@ public class MainController {
 
         new Thread(() -> {
             try {
-                Platform.runLater(() -> {
-                    // Primero cambiar flags y redibujar
-                    dibujarMapa(); // Dibuja el mapa sin Pacman ni Fantasmas
-
-                    // Ahora encima dibujar pacman_dead.png
-                    GraphicsContext gc = gameCanvas.getGraphicsContext2D();
-                    Image deadPacmanImage = new Image(getClass().getResource("/photo/pacman/pac_man_dead.png").toExternalForm());
-                    double x = offsetX + pacman.getCol() * tileSize + (tileSize - 32) / 2;
-                    double y = offsetY + pacman.getRow() * tileSize + (tileSize - 32) / 2;
-                    gc.drawImage(deadPacmanImage, x, y, 32, 32);
-                });
-
-                // Espera 5 segundos
-                Thread.sleep(5000);
+                Thread.sleep(2000);
 
                 Platform.runLater(() -> {
                     vidas--;
+                    actualizarLabels();
 
                     if (vidas <= 0) {
-                        System.exit(0);
+                        Stage stage = (Stage) gameCanvas.getScene().getWindow();
+                        SceneManager.switchSceneWithController(
+                                stage,
+                                "/com/dam/view/gameOver_view.fxml",
+                                "/styles/gameOver_style.css",
+                                (GameOverController controller) -> controller.setScore(score)
+                        );
                     } else {
                         mostrarGoYResetear();
                     }
@@ -305,24 +469,29 @@ public class MainController {
 
 
 
-
-
-
-
     private void mostrarGoYResetear() {
         GraphicsContext gc = gameCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, gameCanvas.getWidth(), gameCanvas.getHeight());
 
-        gc.drawImage(fondoMapa, offsetX, offsetY, tileSize * mapa[0].length, tileSize * mapa.length);
+        dibujarMapa();
 
         gc.setFill(Color.WHITE);
         gc.setFont(new javafx.scene.text.Font(50));
         gc.fillText("GO!", gameCanvas.getWidth() / 2 - 50, gameCanvas.getHeight() / 2);
 
+        // Resetear Pacman
         pacman.setRow(17);
         pacman.setCol(13);
         pacman.setDirection(Pacman.Direction.RIGHT);
+
+        // Resetear fantasmas
         redGhost = new Ghost(11, 13, "red");
+        redGhost.liberar();
+        pinkGhost = new Ghost(14, 13, "pink");
+        blueGhost = new Ghost(13, 13, "blue");
+        orangeGhost = new Ghost(13, 14, "orange");
+
+        pillsEaten = 0;
+        frutaGenerada = false;
 
         new Thread(() -> {
             try {
@@ -334,11 +503,80 @@ public class MainController {
                     mostrandoMuerte = false;
                     dibujarMapa();
                 });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+
+    private int contarPildoras(int[][] mapa) {
+        int total = 0;
+        for (int[] fila : mapa) {
+            for (int celda : fila) {
+                if (celda == 6 || celda == 3) total++;
+            }
+        }
+        return total;
+    }
+
+
+    private void siguienteNivel() {
+        isPacmanDying = true;
+        mostrandoMuerte = true;
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+
+                Platform.runLater(() -> {
+                    for (int i = 0; i < mapa.length; i++) {
+                        System.arraycopy(mapaOriginal[i], 0, mapa[i], 0, mapa[i].length);
+                    }
+
+                    pacman.setRow(17);
+                    pacman.setCol(13);
+                    pacman.setDirection(Pacman.Direction.RIGHT);
+
+                    redGhost = new Ghost(11, 13, "red");
+                    redGhost.liberar();
+                    pinkGhost = new Ghost(14, 13, "pink");
+                    blueGhost = new Ghost(13, 13, "blue");
+                    orangeGhost = new Ghost(13, 14, "orange");
+
+                    pillsEaten = 0;
+                    frutaGenerada = false;
+
+                    nivel++;
+                    ghostSpeed = Math.max(100, ghostSpeed - 20);
+                    actualizarLabels();
+
+                    dibujarMapa();
+                    GraphicsContext gc = gameCanvas.getGraphicsContext2D();
+                    gc.setFill(Color.WHITE);
+                    gc.setFont(new javafx.scene.text.Font(50));
+                    gc.fillText("Next level", gameCanvas.getWidth() / 2 - 50, gameCanvas.getHeight() / 2);
+                });
+
+                Thread.sleep(2000);
+
+                Platform.runLater(() -> {
+                    isPacmanDying = false;
+                    mostrandoMuerte = false;
+                    dibujarMapa();
+                });
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+
+
+    private void actualizarLabels() {
+        labelLives.setText(String.valueOf(vidas));
+        labelLevel.setText(String.valueOf(nivel));
     }
 
 

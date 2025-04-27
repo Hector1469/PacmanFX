@@ -1,6 +1,9 @@
 package com.dam.pacmanfx.model;
 
 import javafx.scene.image.Image;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class Ghost {
     public enum Direction { UP, DOWN, LEFT, RIGHT }
@@ -12,22 +15,31 @@ public class Ghost {
     private final String color;
     private Mode mode = Mode.NORMAL;
     private int frameCounter = 0;
-
     private boolean fleeingNearEnd = false;
     private int fleeingTimer = 0;
+    private boolean enJuego = false;
+    private boolean inteligente = false;
+
+    private final Random random = new Random();
 
     public Ghost(int startRow, int startCol, String color) {
         this.row = startRow;
         this.col = startCol;
         this.color = color;
         this.direction = Direction.LEFT;
+
+        if (color.equals("red")) {
+            this.enJuego = true;
+            this.inteligente = true;
+        }
     }
 
     public int getRow() { return row; }
     public int getCol() { return col; }
     public Direction getDirection() { return direction; }
     public Mode getMode() { return mode; }
-    
+
+    public void liberar() { enJuego = true; }
 
     public void startFleeing() {
         mode = Mode.FLEEING;
@@ -59,18 +71,23 @@ public class Ghost {
     }
 
     public void move(int[][] mapa, Pacman pacman) {
+        if (!enJuego) return;
+
         if (mode == Mode.DEAD) {
             moveDead(mapa);
             return;
         }
 
         if ((mode == Mode.NORMAL || mode == Mode.FLEEING) && mapa[row][col] == 4) {
-            // Si está dentro de la cárcel, salir
             buscarSalidaCarcel(mapa);
             return;
         }
 
-        movimientoNormal(mapa, pacman);
+        if (inteligente) {
+            movimientoInteligente(mapa, pacman);
+        } else {
+            movimientoAleatorio(mapa);
+        }
     }
 
     private void buscarSalidaCarcel(int[][] mapa) {
@@ -83,7 +100,6 @@ public class Ghost {
             if (newRow >= 0 && newRow < mapa.length && newCol >= 0 && newCol < mapa[0].length) {
                 int nextCell = mapa[newRow][newCol];
                 if (nextCell == 0 || nextCell == 6 || nextCell == 5 || nextCell == 3) {
-                    // Hay una salida hacia afuera (camino normal)
                     direction = dir;
                     moverEnDireccion();
                     salidaEncontrada = true;
@@ -98,8 +114,7 @@ public class Ghost {
                 int newCol = col + (dir == Direction.LEFT ? -1 : dir == Direction.RIGHT ? 1 : 0);
 
                 if (newRow >= 0 && newRow < mapa.length && newCol >= 0 && newCol < mapa[0].length) {
-                    int nextCell = mapa[newRow][newCol];
-                    if (nextCell == 4) {
+                    if (mapa[newRow][newCol] == 4) {
                         direction = dir;
                         moverEnDireccion();
                         break;
@@ -118,8 +133,28 @@ public class Ghost {
         }
     }
 
+    private void movimientoAleatorio(int[][] mapa) {
+        List<Direction> posiblesDirecciones = new ArrayList<>();
 
-    private void movimientoNormal(int[][] mapa, Pacman pacman) {
+        for (Direction dir : Direction.values()) {
+            int newRow = row + (dir == Direction.UP ? -1 : dir == Direction.DOWN ? 1 : 0);
+            int newCol = col + (dir == Direction.LEFT ? -1 : dir == Direction.RIGHT ? 1 : 0);
+
+            if (canMove(mapa, newRow, newCol) && dir != getOppositeDirection(direction)) {
+                posiblesDirecciones.add(dir);
+            }
+        }
+
+        if (posiblesDirecciones.isEmpty()) {
+            direction = getOppositeDirection(direction);
+        } else {
+            direction = posiblesDirecciones.get(random.nextInt(posiblesDirecciones.size()));
+        }
+
+        moverEnDireccion();
+    }
+
+    private void movimientoInteligente(int[][] mapa, Pacman pacman) {
         Direction[] directions = Direction.values();
         int options = 0;
 
@@ -159,26 +194,19 @@ public class Ghost {
             direction = bestDir;
         }
 
-        switch (direction) {
-            case UP -> row--;
-            case DOWN -> row++;
-            case LEFT -> col--;
-            case RIGHT -> col++;
-        }
+        moverEnDireccion();
     }
 
     private void moveDead(int[][] mapa) {
         int targetRow = 14;
         int targetCol = 13;
 
-        // 1. Si ya está en la casilla destino, cambiar a modo NORMAL
         if (row == targetRow && col == targetCol) {
             mode = Mode.NORMAL;
             direction = Direction.LEFT;
             return;
         }
 
-        // 2. Buscar el mejor movimiento hacia la cárcel
         Direction[] directions = Direction.values();
         Direction bestDir = null;
         double bestDistance = Double.MAX_VALUE;
@@ -198,30 +226,20 @@ public class Ghost {
             }
         }
 
-        // 3. Si no encuentra mejor camino, girar 180° (callejón)
         if (bestDir == null) {
             bestDir = getOppositeDirection(direction);
         }
 
-        // 4. Mover en la dirección elegida
-        if (bestDir != null) {
-            direction = bestDir;
-            switch (direction) {
-                case UP -> row--;
-                case DOWN -> row++;
-                case LEFT -> col--;
-                case RIGHT -> col++;
-            }
-        }
+        direction = bestDir;
+        moverEnDireccion();
     }
-
 
     private boolean canMove(int[][] mapa, int newRow, int newCol) {
         if (newRow < 0 || newRow >= mapa.length || newCol < 0 || newCol >= mapa[0].length) return false;
         int cell = mapa[newRow][newCol];
 
         if (mode == Mode.DEAD) {
-            return (cell != 1); // Solo muros bloquean
+            return (cell != 1);
         }
 
         if (mapa[row][col] == 4) {

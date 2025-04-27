@@ -1,0 +1,20 @@
+.menu-button {
+    -fx-font-size: 20px;
+    -fx-font-family: "Press Start 2P", monospace;
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-border-color: yellow;
+    -fx-border-width: 2px;
+    -fx-min-width: 200px;
+    -fx-min-height: 40px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #ffff33, 10, 0.5, 0, 0);
+}
+
+.menu-button:hover {
+    -fx-background-color: yellow;
+    -fx-text-fill: black;
+}
+
+
+

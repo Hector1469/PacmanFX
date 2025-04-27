@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane fx:id="root" style="-fx-background-color: black;" prefHeight="700.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dam.pacmanfx.controller.MenuController"> <!-- ✅ Tamaño fijo -->
+
+    <center>
+        <VBox alignment="CENTER" spacing="25">
+            <Button fx:id="btnPlay" onAction="#onPlayClicked" prefWidth="300" styleClass="menu-button" text="PLAY" />
+            <Button fx:id="btnScore" onAction="#onScoreClicked" prefWidth="300" styleClass="menu-button" text="SCORE" />
+            <Button fx:id="btnSkins" onAction="#onSkinClicked" prefWidth="300" styleClass="menu-button" text="SKINS" />
+            <Button fx:id="btnExit" onAction="#onExitClicked" prefWidth="300" styleClass="menu-button" text="EXIT" />
+        </VBox>
+    </center>
+</BorderPane>

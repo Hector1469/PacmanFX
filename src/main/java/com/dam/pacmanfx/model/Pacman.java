@@ -45,7 +45,6 @@ public class Pacman {
             return;
         }
 
-        // Comprobamos si la siguiente celda es transitable
         if (targetCell == 0 || targetCell == 3 || targetCell == 6) {
             row = nextRow;
             col = nextCol;
@@ -61,8 +60,12 @@ public class Pacman {
             default -> "closed";
         };
         String dir = direction.name().toLowerCase();
-        return new Image(getClass().getResource("/photo/pacman/pacman_" + dir + "_" + frameType + ".png").toExternalForm());
+        String skinFolder = com.dam.pacmanfx.util.SkinManager.getSelectedSkin();
+        return new Image(getClass().getResource(
+                "/photo/pacman/" + skinFolder + "/pacman_" + dir + "_" + frameType + ".png"
+        ).toExternalForm());
     }
+
 
     public void updateFrame() {
         animationFrame++;

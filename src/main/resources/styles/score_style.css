@@ -1,0 +1,64 @@
+.root {
+    -fx-background-color: black;
+}
+
+.text {
+    -fx-fill: yellow;
+    -fx-font-family: "Press Start 2P";
+}
+
+.button {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 14px;
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-border-color: yellow;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, yellow, 10, 0.5, 0, 0);
+}
+
+.button:hover {
+    -fx-background-color: yellow;
+    -fx-text-fill: black;
+}
+
+.table-view {
+    -fx-background-color: black;
+    -fx-border-color: yellow;
+    -fx-border-width: 2px;
+    -fx-table-cell-border-color: transparent;
+    -fx-control-inner-background: black;
+    -fx-control-inner-background-alt: black;
+    -fx-selection-bar: black;
+    -fx-selection-bar-non-focused: black;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: black;
+    -fx-border-color: yellow;
+    -fx-border-width: 0 0 2px 0;
+}
+
+.table-view .column-header .label {
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 16px;
+}
+
+.table-cell {
+    -fx-background-color: black;
+    -fx-text-fill: yellow;
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER;
+}
+
+.table-row-cell:empty {
+    -fx-background-color: black;
+}
+
+.table-row-cell {
+    -fx-background-color: black;
+}
